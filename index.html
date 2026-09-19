@@ -143,6 +143,24 @@
             <div class="omr-legend"><span><i class="legend-dot answered"></i>응답</span><span><i class="legend-dot correct"></i>정답</span><span><i class="legend-dot wrong"></i>오답</span></div>
           </aside>
         </div>
+
+        <button id="mobileOmrToggle" class="mobile-omr-fab" aria-label="OMR 답안지 열기">
+          <span class="fab-icon">✓</span>
+          <span class="fab-count">0/60</span>
+        </button>
+
+        <div id="mobileOmrModal" class="mobile-omr-modal">
+          <div class="modal-backdrop"></div>
+          <div class="modal-sheet">
+            <div class="modal-header">
+              <div><h3>OMR 답안지</h3><span id="modalAnsweredCount">0 / 60</span></div>
+              <button id="closeMobileOmr" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+              <div id="mobileOmrGrid" class="omr-grid"></div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="customView" class="view">
