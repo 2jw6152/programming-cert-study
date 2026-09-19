@@ -112,7 +112,26 @@
     const e=currentExam, cfg=DATA.examPages[e], ua=ensureExamAnswers(e), grade=state.examGrades?.[e];
     $('#examTitle').textContent=`${e}회 최종점검 모의고사`;
     $$('#examTabs .exam-tab').forEach(b=>b.classList.toggle('active',+b.dataset.exam===e));
-    $('#examPages').innerHTML=cfg.questions.map((p,i)=>`<div class="exam-page"><span class="page-tag">${e}회 · ${i+1}/6</span><img loading="lazy" src="assets/mock_all/${pageFile(p)}" alt="${e}회 모의고사 원본 ${i+1}페이지"></div>`).join('');
+    $('#examPages').innerHTML=cfg.questions.map((p,i)=>{
+      const startQ=i*10+1, endQ=Math.min((i+1)*10,60);
+      const key=DATA.examAnswers[e];
+      const pageOMR=Array.from({length:endQ-startQ+1},(_,j)=>{
+        const qn=startQ+j, chosen=ua[qn-1], correct=key[qn-1], isCorrect=grade&&chosen===correct;
+        return `<div class="inline-omr-row ${grade?'graded':''} ${grade?(isCorrect?'correct-row':'wrong-row'):''}" data-q="${qn}">
+          <span class="qnum">${qn}</span>
+          ${[1,2,3,4].map(v=>`<button class="omr-opt ${chosen===v?'selected':''} ${grade&&correct===v?'correct-answer':''} ${grade&&chosen===v&&chosen!==correct?'user-wrong':''}" data-v="${v}">${v}</button>`).join('')}
+        </div>`;
+      }).join('');
+      return `<div class="exam-page">
+        <span class="page-tag">${e}회 · ${i+1}/6</span>
+        <img loading="lazy" src="assets/mock_all/${pageFile(p)}" alt="${e}회 모의고사 원본 ${i+1}페이지">
+        <div class="inline-omr-panel">
+          <div class="inline-omr-header"><strong>문제 ${startQ}~${endQ}</strong><span>답안 선택</span></div>
+          <div class="inline-omr-grid">${pageOMR}</div>
+        </div>
+      </div>`;
+    }).join('');
+    attachInlineOMRListeners();
     renderOMR();
     const exp=$('#explanationBlock');
     if(grade){
@@ -120,6 +139,16 @@
       $('#explanationPages').innerHTML=cfg.explanations.map((p,i)=>`<div class="exam-page"><span class="page-tag">해설 ${i+1}/${cfg.explanations.length}</span><img loading="lazy" src="assets/mock_all/${pageFile(p)}" alt="${e}회 모의고사 원본 해설 ${i+1}페이지"></div>`).join('');
     } else { $('#examResult').classList.add('hidden'); exp.classList.add('hidden'); $('#explanationPages').innerHTML=''; }
     $('#answeredCount').textContent=`${ua.filter(Boolean).length} / 60`;
+  }
+  function attachInlineOMRListeners(){
+    $$('.inline-omr-panel .omr-opt').forEach(b=>b.addEventListener('click',()=>{
+      const row=b.closest('.inline-omr-row'), q=+row.dataset.q; 
+      ensureExamAnswers(currentExam)[q-1]=+b.dataset.v;
+      if(state.examGrades[currentExam]) delete state.examGrades[currentExam]; 
+      saveState(); renderExam(); 
+      $('#examResult').classList.add('hidden'); 
+      $('#explanationBlock').classList.add('hidden');
+    }));
   }
   function renderOMR(){
     const ua=ensureExamAnswers(currentExam), grade=state.examGrades?.[currentExam], key=DATA.examAnswers[currentExam];
